@@ -38,7 +38,7 @@ This project follows Domain-Driven Design (DDD) and Event-Driven Architecture (E
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/gana-22/message-management-system.git
    cd message-management-system
    ```
 
