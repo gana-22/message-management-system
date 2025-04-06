@@ -52,8 +52,8 @@ This project follows Domain-Driven Design (DDD) and Event-Driven Architecture (E
 The easiest way to run the application is with Docker Compose:
 
 ```bash
-# Rename .env.example to .env.development
-mv .env.example .env.development
+# Rename .env.example to .env.local
+mv .env.example .env.local
 
 # Build and start all services by using default .env file
 docker compose up -d
@@ -81,7 +81,7 @@ If you want to run the application without Docker, you'll need to:
    ```
    # Application Settings
     PORT=3000
-    NODE_ENV=development
+    NODE_ENV=local
 
     # MongoDB Connection
     MONGODB_URI=mongodb://mongodb:27017/message-db
