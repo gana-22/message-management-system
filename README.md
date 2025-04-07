@@ -123,6 +123,7 @@ Note: Added postman collection in docs folder
 
 ```
 POST /api/messages
+user-role: user|admin
 ```
 
 Request body:
@@ -190,10 +191,11 @@ npm run test:cov
 - Input validation using class-validator
 - Data sanitization
 - Environment variables for sensitive configuration
+**Added authorization only on the Create Message api using Guards and Roles.
 
 ## Future Improvements
 
-- Add authentication and authorization
+- Add authentication and Relationship Based Access Control (ReBAC) as such that only the sender and receiver would be having the access to the conversation
 
 ## Troubleshooting
 

@@ -41,6 +41,11 @@
 							{
 								"key": "Content-Type",
 								"value": "application/json"
+							},
+							{
+								"key": "user-role",
+								"value": "admin",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -109,6 +114,64 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\"conversationId\": \"conv-1\", \"content\": \"Hello earth2\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/messages",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"messages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Fail - Invalid Access",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Response contains 'Forbidden resource' message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.eql(\"Forbidden resource\");",
+									"    pm.expect(jsonData.error).to.eql(\"Forbidden\");",
+									"    pm.expect(jsonData.statusCode).to.eql(403);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"conversationId\": \"conv-1\", \"senderId\": \"user-1\", \"content\": \"Hello earth2\"}",
 							"options": {
 								"raw": {
 									"language": "json"

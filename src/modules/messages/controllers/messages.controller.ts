@@ -10,17 +10,22 @@ import {
   UsePipes,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { MessagesService } from '../services/messages.service';
 import { CreateMessageDto } from '../dto/create-message.dto';
 import { QueryMessagesDto } from '../dto/query-messages.dto';
 import { SearchMessagesDto } from '../dto/search-messages.dto';
+import { RolesGuard } from '../guards/roles.guard';
+import { Roles } from '../decorators/roles.decorator';
 
 @Controller('api')
 export class MessagesController {
   constructor(private messagesService: MessagesService) {}
 
   @Post('messages')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'user')
   @UsePipes(new ValidationPipe({ transform: true }))
   async createMessage(@Body() createMessageDto: CreateMessageDto) {
     try {
