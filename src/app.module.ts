@@ -4,7 +4,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import configuration from './config/configuration';
 import { MessagesModule } from './modules/messages/messages.module';
 import { SearchModule } from './modules/search/search.module';
-import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -21,7 +20,6 @@ import { RedisModule } from './modules/redis/redis.module';
     }),
     MessagesModule,
     SearchModule,
-    RedisModule,
   ],
 })
 export class AppModule {}

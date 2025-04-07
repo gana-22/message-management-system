@@ -118,6 +118,7 @@ If you want to run the application without Docker, you'll need to:
 ## API Endpoints
 
 Note: Added postman collection in docs folder
+Swagger Documentation available on [link](http://localhost:3000/api/docs)
 
 ### Create a new message
 
