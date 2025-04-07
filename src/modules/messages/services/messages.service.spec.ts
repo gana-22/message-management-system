@@ -3,7 +3,7 @@ import { MessagesService } from './messages.service';
 import { MessageRepository } from '../repositories/message.repository';
 import { KafkaProducerService } from './kafka-producer.service';
 import { ElasticsearchService } from '../../search/services/elasticsearch.service';
-import { RedisService } from '../../redis/services/redis.service';
+import { RedisService } from '../../../helpers/redis/redis.service';
 import { CreateMessageDto } from '../dto/create-message.dto';
 import { QueryMessagesDto } from '../dto/query-messages.dto';
 import { SearchMessagesDto } from '../dto/search-messages.dto';

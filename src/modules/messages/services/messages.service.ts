@@ -7,8 +7,8 @@ import { SearchMessagesDto } from '../dto/search-messages.dto';
 import { KafkaProducerService } from './kafka-producer.service';
 import { ElasticsearchService } from '../../search/services/elasticsearch.service';
 import { Message } from '../interfaces/message.interface';
-import { RedisService } from '../../redis/services/redis.service';
-import { createKey } from '../../../helpers/service';
+import { RedisService } from '../../../helpers/redis/redis.service';
+import { createKey } from '../../../helpers/common/service';
 
 @Injectable()
 export class MessagesService {

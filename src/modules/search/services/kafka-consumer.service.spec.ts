@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConsumerService } from './kafka-consumer.service';
 import { ElasticsearchService } from './elasticsearch.service';
-import * as helpers from '../../../helpers/service';
+import { retryMechanism } from '../../../helpers/common/service';
 
 interface KafkaRunCallback {
   eachMessage: (payload: {
@@ -35,7 +35,7 @@ const mockKafka = {
   admin: jest.fn().mockReturnValue(mockAdmin),
 };
 
-jest.mock('../../../helpers/service', () => ({
+jest.mock('../../../helpers/common/service', () => ({
   retryMechanism: jest.fn(),
 }));
 
@@ -116,17 +116,17 @@ describe('Kafka Consumer Service', () => {
         new Error('connection failed'),
       );
 
-      (helpers.retryMechanism as jest.Mock).mockResolvedValueOnce(undefined);
+      (retryMechanism as jest.Mock).mockResolvedValueOnce(undefined);
 
       await service.onModuleInit();
 
-      expect(helpers.retryMechanism).toHaveBeenCalled();
+      expect(retryMechanism).toHaveBeenCalled();
     });
 
     it('should retry if topic does not exist and its a retry attempt', async () => {
       mockAdmin.listTopics.mockResolvedValueOnce([]);
 
-      (helpers.retryMechanism as jest.Mock).mockResolvedValueOnce(undefined);
+      (retryMechanism as jest.Mock).mockResolvedValueOnce(undefined);
 
       type PrivateServiceMethods = {
         setupConsumer: (isRetry: boolean) => Promise<void>;
@@ -137,7 +137,7 @@ describe('Kafka Consumer Service', () => {
 
       await setupConsumerMethod(true);
 
-      expect(helpers.retryMechanism).toHaveBeenCalled();
+      expect(retryMechanism).toHaveBeenCalled();
     });
 
     it('should handle topic creation failure gracefully', async () => {

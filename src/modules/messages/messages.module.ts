@@ -6,15 +6,19 @@ import { MessagesService } from './services/messages.service';
 import { MessageRepository } from './repositories/message.repository';
 import { KafkaProducerService } from './services/kafka-producer.service';
 import { SearchModule } from '../search/search.module';
-import { RedisModule } from '../redis/redis.module';
+import { RedisService } from '../../helpers/redis/redis.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     SearchModule,
-    RedisModule,
   ],
   controllers: [MessagesController],
-  providers: [MessagesService, MessageRepository, KafkaProducerService],
+  providers: [
+    MessagesService,
+    MessageRepository,
+    KafkaProducerService,
+    RedisService,
+  ],
 })
 export class MessagesModule {}

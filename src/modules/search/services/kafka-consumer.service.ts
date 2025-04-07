@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Kafka, Consumer } from 'kafkajs';
 import { ElasticsearchService } from './elasticsearch.service';
 import { Message } from '../../messages/interfaces/message.interface';
-import { retryMechanism } from '../../../helpers/service';
+import { retryMechanism } from '../../../helpers/common/service';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
