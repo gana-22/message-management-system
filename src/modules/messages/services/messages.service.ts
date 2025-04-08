@@ -28,11 +28,14 @@ export class MessagesService {
         createMessageDto,
       )) as Message;
 
-      await this.kafkaProducerService.publishMessage(message);
-      this.logger.log(`Message published to Kafka for processing`);
-
       const cacheKey = createKey('conversation', message.conversationId, '*');
-      await this.redisService.deleteKeysByPattern(cacheKey);
+      await Promise.all([
+        this.kafkaProducerService.publishMessage(message),
+        this.redisService.deleteKeysByPattern(cacheKey),
+      ]);
+
+      this.logger.log(`Message published to Kafka for processing`);
+      this.logger.log(`Conversation cache deleted`);
 
       return message;
     } catch (error) {
