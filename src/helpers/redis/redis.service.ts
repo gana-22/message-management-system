@@ -110,6 +110,8 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         this.logger.log(
           `Deleted ${keys.length} cache keys matching pattern: ${pattern}`,
         );
+      } else {
+        this.logger.log(`No keys found to delete in cache`);
       }
     } catch (error) {
       this.logger.error(

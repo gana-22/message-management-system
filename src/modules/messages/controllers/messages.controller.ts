@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   Param,
   Query,
@@ -115,6 +116,19 @@ export class MessagesController {
     } catch (error) {
       throw new HttpException(
         `Failed to search message: ${error?.message || error}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('conversations/:conversationId')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  async deleteConversation(@Param('conversationId') conversationId: string) {
+    try {
+      return this.messagesService.deleteConversation(conversationId);
+    } catch (error) {
+      throw new HttpException(
+        `Failed to delete conversation: ${error?.message || error}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

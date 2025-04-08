@@ -104,4 +104,24 @@ export class MessagesService {
       throw error;
     }
   }
+
+  // deleting conversation
+  async deleteConversation(conversationId: string) {
+    try {
+      const cacheKey = createKey('conversation', conversationId, '*');
+
+      await Promise.all([
+        this.redisService.deleteKeysByPattern(cacheKey),
+        this.messageRepository.deleteMessagesByConversationId(conversationId),
+        this.elasticsearchService.deleteByConversationId(conversationId),
+      ]);
+
+      return { message: 'all deleted' };
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete conversation: ${error?.message || error}`,
+      );
+      throw error;
+    }
+  }
 }

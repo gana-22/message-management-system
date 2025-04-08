@@ -168,4 +168,33 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
       return { messages: [], total: 0 };
     }
   }
+
+  // deleting conversation in Elasticsearch
+  async deleteByConversationId(conversationId: string): Promise<any> {
+    try {
+      const result = await this.client.deleteByQuery({
+        index: this.index,
+        body: {
+          query: {
+            match: {
+              conversationId: conversationId,
+            },
+          },
+        },
+        refresh: true,
+      });
+
+      this.logger.log(
+        `Deleted ${result.deleted} messages for conversation ID: ${conversationId} from Elasticsearch`,
+      );
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `Failed to delete messages by conversation ID from Elasticsearch: ${
+          error?.message || error
+        }`,
+      );
+      throw error;
+    }
+  }
 }
