@@ -104,13 +104,23 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
             const messageValue = message.value.toString();
             const parsedMessage = JSON.parse(messageValue) as Message;
 
-            await this.elasticsearchService.indexMessage(parsedMessage);
+            await retryMechanism(
+              async () => {
+                await this.elasticsearchService.indexMessage(parsedMessage);
+              },
+              3, // Number of retries for indexing
+              5000, // Delay between retries (5 seconds)
+            );
+
+            this.logger.log(`Successfully processed message`);
           } catch (error) {
             this.logger.error(
               `Error processing message: ${error?.message || error}`,
             );
+            throw error; // to prevent the offset commit
           }
         },
+        autoCommit: false, // disable auto-commit
       });
 
       this.logger.log(
