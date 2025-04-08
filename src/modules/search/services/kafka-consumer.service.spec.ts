@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { KafkaConsumerService } from './kafka-consumer.service';
@@ -196,8 +197,14 @@ describe('Kafka Consumer Service', () => {
         ),
       };
 
+      (retryMechanism as jest.Mock).mockImplementationOnce((fn) => fn());
       await mockRunCallback.eachMessage({ message });
 
+      expect(retryMechanism).toHaveBeenCalledWith(
+        expect.any(Function),
+        3,
+        5000,
+      );
       expect(elasticsearchService.indexMessage).toHaveBeenCalled();
     });
 
@@ -226,8 +233,12 @@ describe('Kafka Consumer Service', () => {
         value: Buffer.from('invalid-json'),
       };
 
-      await mockRunCallback.eachMessage({ message });
+      // Expect JSON parsing error to be thrown
+      await expect(mockRunCallback.eachMessage({ message })).rejects.toThrow(
+        'Unexpected token',
+      );
 
+      expect(retryMechanism).not.toHaveBeenCalled();
       expect(elasticsearchService.indexMessage).not.toHaveBeenCalled();
     });
   });
