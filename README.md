@@ -26,6 +26,8 @@ This project follows Domain-Driven Design (DDD) and Event-Driven Architecture (E
 5. Clients can query messages by conversation or search for specific content
 6. Query results will be retrieved from Redis if available; otherwise, they will be stored in Redis.
 
+![Data Flow](docs/system-flow.png)
+
 ## Prerequisites
 
 - [Docker](https://www.docker.com/products/docker-desktop) (Docker Engine 28+ and Docker Compose v2)
