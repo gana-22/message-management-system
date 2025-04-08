@@ -5,7 +5,8 @@ export default () => ({
   },
   kafka: {
     brokers: (process.env.KAFKA_BROKERS || 'localhost:9092').split(','),
-    topic: process.env.KAFKA_TOPIC || 'messages',
+    messageTopic: process.env.KAFKA_MESSAGE_TOPIC || 'messages',
+    cacheTopic: process.env.KAFKA_CACHE_TOPIC || 'cache',
   },
   elasticsearch: {
     node: process.env.ELASTICSEARCH_NODE || 'http://localhost:9200',

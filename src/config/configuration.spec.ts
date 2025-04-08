@@ -17,7 +17,7 @@ describe('Configuration', () => {
       delete process.env.PORT;
       delete process.env.MONGODB_URI;
       delete process.env.KAFKA_BROKERS;
-      delete process.env.KAFKA_TOPIC;
+      delete process.env.KAFKA_MESSAGE_TOPIC;
       delete process.env.ELASTICSEARCH_NODE;
       delete process.env.ELASTICSEARCH_INDEX;
       delete process.env.ELASTICSEARCH_SHARD;
@@ -31,7 +31,7 @@ describe('Configuration', () => {
       expect(config.port).toBe(3000);
       expect(config.mongodb.uri).toBe('mongodb://localhost:27017/message-db');
       expect(config.kafka.brokers).toEqual(['localhost:9092']);
-      expect(config.kafka.topic).toBe('messages');
+      expect(config.kafka.messageTopic).toBe('messages');
       expect(config.elasticsearch.node).toBe('http://localhost:9200');
       expect(config.elasticsearch.index).toBe('messages');
       expect(config.elasticsearch.shards).toBe(1);
@@ -45,7 +45,7 @@ describe('Configuration', () => {
       process.env.PORT = '4000';
       process.env.MONGODB_URI = 'mongodb://testhost:27017/test-db';
       process.env.KAFKA_BROKERS = 'broker1:9092,broker2:9092';
-      process.env.KAFKA_TOPIC = 'test-topic';
+      process.env.KAFKA_MESSAGE_TOPIC = 'test-topic';
       process.env.ELASTICSEARCH_NODE = 'http://es-test:9200';
       process.env.ELASTICSEARCH_INDEX = 'test-index';
       process.env.ELASTICSEARCH_SHARD = '3';
@@ -59,7 +59,7 @@ describe('Configuration', () => {
       expect(config.port).toBe(4000);
       expect(config.mongodb.uri).toBe('mongodb://testhost:27017/test-db');
       expect(config.kafka.brokers).toEqual(['broker1:9092', 'broker2:9092']);
-      expect(config.kafka.topic).toBe('test-topic');
+      expect(config.kafka.messageTopic).toBe('test-topic');
       expect(config.elasticsearch.node).toBe('http://es-test:9200');
       expect(config.elasticsearch.index).toBe('test-index');
       expect(config.elasticsearch.shards).toBe(3);
@@ -71,7 +71,7 @@ describe('Configuration', () => {
 
     it('should handle partial environment variable configuration', () => {
       process.env.PORT = '5000';
-      process.env.KAFKA_TOPIC = 'partial-topic';
+      process.env.KAFKA_MESSAGE_TOPIC = 'partial-topic';
       process.env.REDIS_CACHE_TTL = '300';
 
       const config = configuration();
@@ -79,7 +79,7 @@ describe('Configuration', () => {
       expect(config.port).toBe(5000);
       expect(config.mongodb.uri).toBe('mongodb://localhost:27017/message-db');
       expect(config.kafka.brokers).toEqual(['localhost:9092']);
-      expect(config.kafka.topic).toBe('partial-topic');
+      expect(config.kafka.messageTopic).toBe('partial-topic');
       expect(config.elasticsearch.node).toBe('http://localhost:9200');
       expect(config.redis.ttl).toBe(300);
     });

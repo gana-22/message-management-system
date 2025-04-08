@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, Logger } from '@nestjs/common';
 import { MessageRepository } from '../repositories/message.repository';
@@ -29,9 +30,17 @@ export class MessagesService {
       )) as Message;
 
       const cacheKey = createKey('conversation', message.conversationId, '*');
-      await Promise.all([
-        this.kafkaProducerService.publishMessage(message),
-        this.redisService.deleteKeysByPattern(cacheKey),
+      await Promise.allSettled([
+        this.kafkaProducerService.publishMessage(message).catch((error) => {
+          this.logger.error(
+            `Failed to publish message to Kafka: ${error?.message || error}`,
+          );
+        }),
+        this.redisService.deleteKeysByPattern(cacheKey).catch((error) => {
+          this.logger.error(
+            `Failed to delete cache: ${error?.message || error}`,
+          );
+        }),
       ]);
 
       this.logger.log(`Message published to Kafka for processing`);
@@ -49,9 +58,10 @@ export class MessagesService {
     conversationId: string,
     queryDto: QueryMessagesDto,
   ) {
-    try {
-      const cacheKey = createKey('conversation', conversationId, queryDto);
+    const cacheKey = createKey('conversation', conversationId, queryDto);
 
+    // try to get the cache
+    try {
       const cachedData = await this.redisService.get(cacheKey);
       if (cachedData) {
         this.logger.log(
@@ -59,14 +69,36 @@ export class MessagesService {
         );
         return cachedData;
       }
+    } catch (redisGetError) {
+      this.logger.warn(
+        `Redis cache retrieval failed: ${redisGetError?.message || redisGetError}`,
+      );
+    }
 
+    try {
       this.logger.log(`No cache, find conversation by id: "${conversationId}"`);
       const result = await this.messageRepository.findByConversationId(
         conversationId,
         queryDto,
       );
 
-      await this.redisService.set(cacheKey, result);
+      // try to cache result
+      try {
+        await this.redisService.set(cacheKey, result);
+      } catch (redisSetError) {
+        this.logger.warn(
+          `Failed to cache results: ${redisSetError?.message || redisSetError}`,
+        );
+
+        // try to publish the cache result with key to Kafka as fallback in case if set cache failed
+        try {
+          await this.kafkaProducerService.publishCache(cacheKey, result);
+        } catch (kafkaError) {
+          this.logger.error(
+            `Failed to publish to Kafka: ${kafkaError?.message || kafkaError}`,
+          );
+        }
+      }
 
       return result;
     } catch (error) {
@@ -82,12 +114,18 @@ export class MessagesService {
     try {
       const cacheKey = createKey('conversation', conversationId, searchDto);
 
-      const cachedData = await this.redisService.get(cacheKey);
-      if (cachedData) {
-        this.logger.log(
-          `Returning cached search results for query "${searchDto.q}"`,
+      try {
+        const cachedData = await this.redisService.get(cacheKey);
+        if (cachedData) {
+          this.logger.log(
+            `Returning cached search results for query "${searchDto.q}"`,
+          );
+          return cachedData;
+        }
+      } catch (redisGetError) {
+        this.logger.warn(
+          `Redis cache retrieval failed: ${redisGetError?.message || redisGetError}`,
         );
-        return cachedData;
       }
 
       this.logger.log(`No cache, search message for: "${searchDto.q}"`);
@@ -96,7 +134,22 @@ export class MessagesService {
         searchDto,
       );
 
-      await this.redisService.set(cacheKey, result);
+      try {
+        await this.redisService.set(cacheKey, result);
+      } catch (redisSetError) {
+        this.logger.warn(
+          `Failed to cache search results: ${redisSetError?.message || redisSetError}`,
+        );
+
+        // try to publish the cache result with key to Kafka as fallback in case if set cache failed
+        try {
+          await this.kafkaProducerService.publishCache(cacheKey, result);
+        } catch (kafkaError) {
+          this.logger.error(
+            `Failed to publish to Kafka: ${kafkaError?.message || kafkaError}`,
+          );
+        }
+      }
 
       return result;
     } catch (error) {
@@ -110,11 +163,22 @@ export class MessagesService {
     try {
       const cacheKey = createKey('conversation', conversationId, '*');
 
-      await Promise.all([
+      const results = await Promise.allSettled([
         this.redisService.deleteKeysByPattern(cacheKey),
         this.messageRepository.deleteMessagesByConversationId(conversationId),
         this.elasticsearchService.deleteByConversationId(conversationId),
       ]);
+
+      const failures = results.filter((result) => result.status === 'rejected');
+      if (failures.length > 0) {
+        const errors = failures.map(
+          (result: any) => result.reason?.message || 'Unknown error',
+        );
+        this.logger.error(
+          `Some delete operations failed: ${errors.join(', ')}`,
+        );
+        throw new Error(`Failed to delete conversation: ${errors[0]}`);
+      }
 
       return { message: 'all deleted' };
     } catch (error) {

@@ -90,11 +90,12 @@ If you want to run the application without Docker, you'll need to:
 
     # Kafka Configuration
     KAFKA_BROKERS=kafka:9092
-    KAFKA_TOPIC=messages
+    KAFKA_MESSAGE_TOPIC=messages
+    KAFKA_CACHE_TOPIC=messages
     KAFKA_CFG_PROCESS_ROLES=broker,controller
     KAFKA_CFG_NODE_ID=1
     KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-    KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+    KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
     KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
 
     # Elasticsearch Configuration

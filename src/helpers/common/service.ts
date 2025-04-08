@@ -4,11 +4,11 @@ import { Logger } from '@nestjs/common';
 const logger = new Logger('HelperService');
 
 // retry mechanism
-export async function retryMechanism(
-  fn: () => Promise<void>,
+export async function retryMechanism<T = void>(
+  fn: () => Promise<T>,
   retries: number,
   delay: number,
-) {
+): Promise<T | void> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await fn();

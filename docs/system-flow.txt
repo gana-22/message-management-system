@@ -1,0 +1,22 @@
+Create Message Flow
+1. Client makes a POST request to create a message
+1. Message stored into MongoDB
+2. Publish message to Kafka (topic:messages)
+3. Delete Redis cache by pattern of conversation:{conversationId}:*
+
+Async
+1. Kafka consumer pulls message
+2. Index message to Elasticsearch
+
+Get Message Flow
+1. optional params of page, limit, sortBy and sortOrder
+2. Get cache from Redis using cachekey conversation:{conversationId}:*
+3. Return result if cache found; else find conversation by id from MongoDB
+4. cache returned result in Redis using cachekey
+
+
+Search Message Flow
+1. Mandatory to pass q param but optional page and limit
+2. Get cache from Redis using conversation:{conversationId}:*
+3. Return result if cache found; else search message in Elasticsearch
+4. cache returned result in Redis using cachekey
