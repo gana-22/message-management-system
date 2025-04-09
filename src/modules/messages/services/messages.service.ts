@@ -25,6 +25,7 @@ export class MessagesService {
   // creates a new message
   async createMessage(createMessageDto: CreateMessageDto): Promise<Message> {
     try {
+      // to ensure data consistency, may implement the acid properties (transactional outbox pattern)
       const message = (await this.messageRepository.create(
         createMessageDto,
       )) as Message;
@@ -53,21 +54,16 @@ export class MessagesService {
     }
   }
 
-  // retrieve messages for a conversation
-  async getMessagesByConversationId(
-    conversationId: string,
-    queryDto: QueryMessagesDto,
-  ) {
-    const cacheKey = createKey('conversation', conversationId, queryDto);
-
-    // try to get the cache
+  private async processCache<T>(
+    cacheKey: string,
+    operation: () => Promise<T>,
+    logMessage: string,
+  ): Promise<T> {
     try {
       const cachedData = await this.redisService.get(cacheKey);
       if (cachedData) {
-        this.logger.log(
-          `Returning cached results for conversation: "${conversationId}"`,
-        );
-        return cachedData;
+        this.logger.log(logMessage);
+        return cachedData as T;
       }
     } catch (redisGetError) {
       this.logger.warn(
@@ -75,32 +71,50 @@ export class MessagesService {
       );
     }
 
+    const result = await operation();
+
+    // try to cache the result
     try {
-      this.logger.log(`No cache, find conversation by id: "${conversationId}"`);
-      const result = await this.messageRepository.findByConversationId(
-        conversationId,
-        queryDto,
+      await this.redisService.set(cacheKey, result);
+    } catch (redisSetError) {
+      this.logger.warn(
+        `Failed to cache results: ${redisSetError?.message || redisSetError}`,
       );
 
-      // try to cache result
+      // try to publish the cache result with key to Kafka as fallback in case if set cache failed
       try {
-        await this.redisService.set(cacheKey, result);
-      } catch (redisSetError) {
-        this.logger.warn(
-          `Failed to cache results: ${redisSetError?.message || redisSetError}`,
+        await this.kafkaProducerService.publishCache(cacheKey, result);
+      } catch (kafkaError) {
+        this.logger.error(
+          `Failed to publish to Kafka: ${kafkaError?.message || kafkaError}`,
         );
-
-        // try to publish the cache result with key to Kafka as fallback in case if set cache failed
-        try {
-          await this.kafkaProducerService.publishCache(cacheKey, result);
-        } catch (kafkaError) {
-          this.logger.error(
-            `Failed to publish to Kafka: ${kafkaError?.message || kafkaError}`,
-          );
-        }
       }
+    }
 
-      return result;
+    return result;
+  }
+
+  // retrieve messages for a conversation
+  async getMessagesByConversationId(
+    conversationId: string,
+    queryDto: QueryMessagesDto,
+  ) {
+    try {
+      const cacheKey = createKey('conversation', conversationId, queryDto);
+
+      return await this.processCache(
+        cacheKey,
+        async () => {
+          this.logger.log(
+            `No cache, find conversation by id: "${conversationId}"`,
+          );
+          return await this.messageRepository.findByConversationId(
+            conversationId,
+            queryDto,
+          );
+        },
+        `Returning cached results for conversation: "${conversationId}"`,
+      );
     } catch (error) {
       this.logger.error(
         `Failed to retrieve message: ${error?.message || error}`,
@@ -114,44 +128,17 @@ export class MessagesService {
     try {
       const cacheKey = createKey('conversation', conversationId, searchDto);
 
-      try {
-        const cachedData = await this.redisService.get(cacheKey);
-        if (cachedData) {
-          this.logger.log(
-            `Returning cached search results for query "${searchDto.q}"`,
+      return await this.processCache(
+        cacheKey,
+        async () => {
+          this.logger.log(`No cache, search message for: "${searchDto.q}"`);
+          return await this.elasticsearchService.searchMessages(
+            conversationId,
+            searchDto,
           );
-          return cachedData;
-        }
-      } catch (redisGetError) {
-        this.logger.warn(
-          `Redis cache retrieval failed: ${redisGetError?.message || redisGetError}`,
-        );
-      }
-
-      this.logger.log(`No cache, search message for: "${searchDto.q}"`);
-      const result = await this.elasticsearchService.searchMessages(
-        conversationId,
-        searchDto,
+        },
+        `Returning cached search results for query "${searchDto.q}"`,
       );
-
-      try {
-        await this.redisService.set(cacheKey, result);
-      } catch (redisSetError) {
-        this.logger.warn(
-          `Failed to cache search results: ${redisSetError?.message || redisSetError}`,
-        );
-
-        // try to publish the cache result with key to Kafka as fallback in case if set cache failed
-        try {
-          await this.kafkaProducerService.publishCache(cacheKey, result);
-        } catch (kafkaError) {
-          this.logger.error(
-            `Failed to publish to Kafka: ${kafkaError?.message || kafkaError}`,
-          );
-        }
-      }
-
-      return result;
     } catch (error) {
       this.logger.error(`Failed to search message: ${error?.message || error}`);
       throw error;

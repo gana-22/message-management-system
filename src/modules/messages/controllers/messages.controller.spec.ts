@@ -87,6 +87,7 @@ describe('Message Controller', () => {
             senderId: 'user-1',
             content: 'Hello world',
             timestamp: new Date(),
+            metadata: {},
           },
         ],
         total: 1,

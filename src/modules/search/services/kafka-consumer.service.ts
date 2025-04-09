@@ -56,6 +56,8 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
         maxRetries: this.maxRetries,
         retryDelay: this.retryDelay,
         processor: async (message: Message) => {
+          // potential duplicates of indexing in ES here if the kafka consumer or ES fails and re-process the message
+          // we can resolve it by storing the messageId in the Redis cache with TTL 24 hours; if messageId found then we skipping it from indexing
           await this.elasticsearchService.indexMessage(message);
         },
       }),
@@ -73,6 +75,29 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       }),
     ]);
   }
+
+  /* UNTESTED
+  private async processMessage(message: Message) {
+    const messageId = message.id;
+    const processed = await this.checkIfProcessed(messageId);
+
+    if (processed) {
+      this.logger.log(`Message ${messageId} already processed, skipping`);
+      return;
+    }
+
+    await this.elasticsearchService.indexMessage(message);
+    await this.markAsProcessed(messageId);
+  }
+
+  private async checkIfProcessed(messageId: string): Promise<boolean> {
+    return Boolean(await this.redisService.get(`processed:${messageId}`));
+  }
+
+  private async markAsProcessed(messageId: string): Promise<void> {
+    await this.redisService.set(`processed:${messageId}`, true, 86400);
+  }
+  */
 
   // setting up kafka consumer
   private async setupConsumer<T>(

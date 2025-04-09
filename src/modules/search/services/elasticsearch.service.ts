@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
+  // extends service to include health check methods
   private client: Client;
   private readonly index: string;
   private readonly shards: number;
@@ -46,7 +47,7 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
               senderId: { type: 'keyword' },
               content: {
                 type: 'text',
-                analyzer: 'standard',
+                analyzer: 'standard', // for general purpose text
                 fields: {
                   keyword: {
                     type: 'keyword',
@@ -55,7 +56,7 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
                 },
               },
               timestamp: { type: 'date' },
-              metadata: { type: 'object', enabled: true },
+              metadata: { type: 'object', enabled: true }, // dynamic nested field
             },
           },
           settings: {
@@ -134,7 +135,7 @@ export class ElasticsearchService implements OnModuleInit, OnModuleDestroy {
               {
                 multi_match: {
                   query: q,
-                  fields: ['content^3', 'metadata.*'],
+                  fields: ['content^3', 'metadata.*'], // search query boosts the content field (^3) over metadata, prioritizing primary content in result
                   fuzziness: 'AUTO',
                 },
               },
